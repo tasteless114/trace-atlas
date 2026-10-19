@@ -554,7 +554,12 @@ class LibraryTests(unittest.TestCase):
         with zipfile.ZipFile(archive_path) as archive:
             names = archive.namelist()
             self.assertIn('行迹/运动数据/', names)
-            self.assertEqual([name for name in names if name.startswith('行迹/运动数据/')], ['行迹/运动数据/'])
+            # 运动数据/ 里只允许预置的合成示例轨迹，绝不能出现真实活动文件或数据库。
+        activity_entries = [name for name in names if name.startswith('行迹/运动数据/')]
+        demo = [name for name in activity_entries if Path(name).suffix.lower() in ('.gpx', '.tcx', '.fit')]
+        self.assertTrue(all('示例' in Path(name).name for name in demo), demo)
+        self.assertEqual([name for name in activity_entries if name not in demo], ['行迹/运动数据/'])
+        self.assertFalse(any('.sqlite' in name or name.startswith('行迹/data/') for name in names))
             self.assertFalse(any('/data/' in name or '/.venv/' in name or name.lower().endswith(('.fit', '.tcx', '.sqlite3', '.jpg')) for name in names))
             config = json.loads(archive.read('行迹/config.json'))
             self.assertEqual(config['folder'], '运动数据')
