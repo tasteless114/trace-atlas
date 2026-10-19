@@ -1,0 +1,10 @@
+{
+  "port": 8787,
+  "folder": "运动数据",
+  "coordinate_mode": "auto",
+  "basemap": "amap_road",
+  "workers": 0,
+  "offline_min_zoom": 8,
+  "offline_max_zoom": 16,
+  "offline_max_tiles": 12000
+}

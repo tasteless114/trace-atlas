@@ -1,0 +1,53 @@
+:root { --track-color: #6ee7f9; --track-width: 1.25px; }
+.mode-tabs { display:flex; gap:4px; padding:4px; margin-bottom:18px; border:1px solid #232728; border-radius:8px; background:#0e1913; }
+.mode-tabs button { flex:1; border:0; border-radius:5px; padding:8px 2px; color:#9c8a78; font-size:11px; background:transparent; }
+.mode-tabs button.active { color:#120d09; background:var(--accent); }
+.line-icon { display:inline-block; width:18px; height:0; border-top:2px solid var(--track-color); transform:rotate(-25deg); margin-right:2px; }
+#footprint-controls .slider-line output { width:32px; }
+#footprint-controls .slider-line input { min-width:0; flex:1; }
+.line-color-select { margin-top:2px; margin-bottom:16px; }
+.footprint-sample { height:var(--track-width); min-height:1px; margin:3px 0 10px; background:var(--track-color); }
+.footprint-legend .legend-title strong { color:var(--track-color); }
+.folder-hint { margin:7px 0 0; font-size:9px; color:#8d7a68; line-height:1.6; }
+.folder-hint code { font-family:inherit; color:#a08d7a; }
+/* Heat ramp is rebuilt per sport (cycling / running) in app.js. */
+.legend-gradient { background-image:var(--legend-ramp, linear-gradient(90deg,#174cd8,#00baca,#7fb894,#f3e165,#ff843c,#f44343)); }
+/* Folders that are scanned for FIT / TCX files. */
+.folder-list { display:flex; flex-wrap:wrap; gap:4px; margin-top:8px; }
+.folder-chip { max-width:100%; padding:3px 7px; border:1px solid #232728; border-radius:5px; background:#0e1913; color:#83715e; font-size:9px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+/* Offline basemap download */
+.offline-row { display:flex; align-items:center; gap:8px; margin-top:11px; }
+.offline-button { flex:0 0 auto; padding:6px 9px; font-size:10px; white-space:nowrap; color:#a08d7a; background:#1c2a20; border:1px solid #232728; border-radius:6px; }
+.offline-button:hover:not(:disabled) { color:var(--accent); border-color:var(--accent); }
+#offline-status { font-size:9px; color:#8d7a68; line-height:1.35; }
+.mode-tabs button { padding:8px 1px; font-size:10.5px; }
+/* Collapse the sidebar for a full-width map (button in the map header, or the H key). */
+body.panel-hidden .sidebar { display:none; }
+body.panel-hidden #mobile-sidebar { display:none; }
+#map[hidden] { display:none; }
+
+/* 3D 卫星爬升视图 */
+#map3d { position:absolute; inset:0; background:#0b1110; }
+#map3d[hidden], #map[hidden] { display:none; }
+.climb-icon { display:inline-block; color:var(--accent); font-size:9px; margin-right:4px; }
+.climb-hint { margin:9px 0 0; font-size:9px; color:#8d7a68; line-height:1.6; }
+body.climb-mode .maplibregl-ctrl-group { background:#1c2a20; border:1px solid #232728; }
+body.climb-mode .maplibregl-ctrl-group button + button { border-top:1px solid #232728; }
+body.climb-mode .maplibregl-ctrl-group button .maplibregl-ctrl-icon { filter:invert(1) brightness(1.6); }
+body.climb-mode .maplibregl-ctrl-attrib, body.climb-mode .maplibregl-ctrl-scale {
+  background:#0e1112db; color:#8c7a68; border-color:#2a211c; }
+.switch-line { display:flex; align-items:center; justify-content:space-between; padding:2px 0 6px; }
+.switch-line label:first-child { font-size:10px; color:#7d6a58; }
+.mini-select { width: 86px; padding: 4px 6px; font-size: 10px; background: #0d0f10; border: 1px solid #25292a; border-radius: 5px; color: #c8cdc9; }
+
+/* 选中活动的详细数据 */
+.detail-toggle { margin-top: 12px; width: 100%; padding: 8px; font-size: 11px;
+  color: var(--accent); background: #f2703c14; border: 1px solid #f2703c44;
+  border-radius: 7px; }
+.detail-toggle:hover { background: #f2703c22; }
+.detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; margin: 12px 0 0; }
+.detail-grid[hidden] { display: none; }
+.detail-grid div { display: flex; flex-direction: column; gap: 3px; }
+.detail-grid dt { font-size: 9px; color: #8d7a68; letter-spacing: .3px; }
+.detail-grid dd { margin: 0; font-size: 15px; color: #d6dbd5; font-variant-numeric: tabular-nums; }
+.detail-grid dd small { font-size: 9px; color: #8d7a68; margin-left: 2px; }

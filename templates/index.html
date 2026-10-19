@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111919">
+  <title>行迹 · 我的运动足迹</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%23c4ef73'/%3E%3Cpath d='M7 23L12 9h7l-3 8h9' fill='none' stroke='%23121c1a' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/static/vendor/leaflet.css">
+  <link rel="stylesheet" href="/static/vendor/maplibre-gl.css">
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/footprints.css">
+  <script src="/static/vendor/leaflet.js" defer></script>
+  <script src="/static/vendor/maplibre-gl.js" defer></script>
+  <script src="/static/map3d.js" defer></script>
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+  <aside class="sidebar">
+    <header class="brand">
+      <div class="brand-mark"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M6 24L12 8h9l-5 10h10"/></svg></div>
+      <div><h1>行迹<span>TRACE ATLAS</span></h1><p>把每次出发，留在地图上。</p></div>
+      <button class="icon-button" id="toggle-import" title="打开导入面板" aria-label="打开导入面板">＋</button>
+    </header>
+
+    <section class="library-summary">
+      <div class="section-label"><span id="summary-label">我的运动足迹</span><span class="local-badge"><i></i> 本地存储</span></div>
+      <div class="big-stat"><strong id="total-distance">—</strong><span>公里</span></div>
+      <div class="mini-stats">
+        <div><strong id="total-count">—</strong><span>次活动</span></div>
+        <div><strong id="total-hours">—</strong><span id="total-hours-label">小时运动</span></div>
+        <div><strong id="total-ascent">—</strong><span>米爬升</span></div>
+      </div>
+      <p id="date-range" class="date-range">正在读取本地记录…</p>
+    </section>
+
+    <section class="import-section" id="import-section">
+      <div class="import-heading"><span>导入 FIT / TCX / GPX 记录</span><span class="small-muted" id="library-count">支持批量</span></div>
+      <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="选择或拖入多个 FIT / TCX / GPX 文件">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m-4 4 4-4 4 4M4 15v5h16v-5"/></svg>
+        <div>拖入多个 FIT / TCX / GPX 文件，或<span>点击选择</span></div>
+        <small>自动去重 · 支持多选和整目录扫描</small>
+      </div>
+      <input id="file-input" type="file" accept=".fit,.tcx,.gpx" multiple hidden>
+      <div class="folder-list" id="folder-list" aria-label="默认扫描目录"></div>
+      <div class="folder-input"><input id="extra-folder" placeholder="其他目录（多个用 ; 分隔）" aria-label="其他 FIT / TCX / GPX 目录" spellcheck="false"><button id="scan-folder" title="扫描 fit、tcx 及填写的目录">重新扫描</button></div>
+      <p class="folder-hint">把 FIT / TCX / GPX 文件都放进项目内的 <code>运动数据</code> 文件夹（支持任意子文件夹），再点击“重新扫描”。</p>
+      <div class="job-panel" id="job-panel" hidden>
+        <div class="job-heading"><span id="job-title">准备导入</span><span id="job-count"></span></div>
+        <progress id="job-progress" max="100" value="0"></progress>
+        <p id="job-detail"></p>
+        <details id="job-errors" hidden><summary>查看导入问题</summary><div id="error-list"></div></details>
+      </div>
+    </section>
+
+    <section class="filter-section">
+      <div class="section-label"><span>时间范围</span><button class="text-button" id="reset-filters">重置</button></div>
+      <div class="quick-dates" id="quick-dates"><button data-period="all" class="active">全部记录</button><button data-period="90">近 90 天</button><button data-period="year">今年</button></div>
+      <div class="date-inputs"><input type="date" id="date-from" aria-label="开始日期"><span>—</span><input type="date" id="date-to" aria-label="结束日期"></div>
+      <div class="list-controls"><select id="sport-filter" aria-label="运动类型"><option value="all">全部运动</option><option value="cycling">骑行</option><option value="running">跑步</option><option value="hiking">步行 / 徒步</option><option value="gps">仅含 GPS</option></select><input type="search" id="search" placeholder="搜索文件名" aria-label="搜索文件名"></div>
+    </section>
+
+    <div class="list-title"><span>活动记录</span><span id="list-count">—</span></div>
+    <div class="activity-list" id="activity-list" aria-label="活动列表"></div>
+    <button class="load-more" id="load-more" hidden>加载更多活动</button>
+    <footer class="sidebar-footer"><span class="status-dot"></span><span id="server-status">连接本机服务…</span><span>v1.3</span></footer>
+  </aside>
+
+  <main class="map-main">
+    <div id="map" aria-label="运动热图地图"></div>
+    <div id="map3d" hidden aria-label="3D 卫星爬升视图"></div>
+    <header class="map-header"><div><div class="eyebrow">YOUR ROADS, YOUR STORY</div><h2 id="map-title">我的运动足迹</h2></div><div class="map-header-actions"><button id="fit-all" class="map-button"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M7 3H3v4m10-4h4v4M3 13v4h4m10-4v4h-4"/></svg>查看全部</button><button id="toggle-panel" class="map-button" aria-pressed="false" title="收起左侧面板，只看地图（快捷键 H）">隐藏面板</button><button id="mobile-sidebar" class="map-button">活动 / 导入</button></div></header>
+
+    <section class="map-controls" aria-label="地图显示设置">
+      <div class="mode-tabs" role="group" aria-label="地图显示模式"><button data-mode="footprint" class="active" aria-pressed="true">足迹线条</button><button data-mode="heat" aria-pressed="false">热力图</button><button data-mode="climb" aria-pressed="false">3D 爬升</button></div>
+      <div id="climb-controls" hidden>
+        <div class="control-title"><span class="climb-icon">▲</span><strong>3D 卫星爬升</strong></div>
+        <div class="switch-line"><label for="climb-terrain">3D 地形</label><label class="switch"><input id="climb-terrain" type="checkbox" aria-label="3D 地形"><span></span></label></div>
+        <div class="switch-line"><label for="climb-altitude">海拔着色</label><label class="switch"><input id="climb-altitude" type="checkbox" checked aria-label="海拔着色"><span></span></label></div>
+        <div class="slider-line"><label for="climb-color">线条颜色</label><select id="climb-color" class="mini-select" aria-label="单色模式下的线条颜色"><option value="#f2703c">橙</option><option value="#9cb183">灰绿</option><option value="#ecf6ff">白</option><option value="#ff8b5e">珊瑚</option></select></div>
+        <div class="slider-line"><label for="climb-precision">轨迹精度</label><input id="climb-precision" type="range" min="4" max="40" value="12"><output id="precision-value">细</output></div>
+        <div class="slider-line"><label for="climb-pitch">俯仰</label><input id="climb-pitch" type="range" min="0" max="85" value="55"><output id="pitch-value">55</output></div>
+        <div class="slider-line"><label for="climb-bearing">旋转</label><input id="climb-bearing" type="range" min="0" max="360" value="0"><output id="bearing-value">0</output></div>
+        <p class="climb-hint">颜色按海拔从青到红，越高越暖<br><span id="climb-info">从左侧列表选一次活动，就会画出它的爬升</span></p>
+      </div>
+
+      <div id="heat-controls" hidden>
+        <div class="control-title"><span class="heat-icon">◉</span><strong>叠加热力线条</strong><label class="switch"><input id="heat-visible" type="checkbox" checked aria-label="显示热力图"><span></span></label></div>
+        <div class="slider-line"><label for="heat-width">线条宽度</label><input id="heat-width" type="range" min="8" max="40" value="15"><output id="width-value">15</output></div>
+        <div class="slider-line"><label for="heat-intensity">色温强度</label><input id="heat-intensity" type="range" min="40" max="180" value="100"><output id="intensity-value">100</output></div>
+      </div>
+      <div id="footprint-controls">
+        <div class="control-title"><span class="line-icon"></span><strong>走过的每一条路</strong></div>
+        <div class="slider-line"><label for="line-width">线条宽度</label><input id="line-width" type="range" min="0.5" max="3" step="0.25" value="1.25"><output id="line-width-value">1.25</output></div>
+        <div class="slider-line"><label for="line-opacity">线条亮度</label><input id="line-opacity" type="range" min="30" max="100" value="90"><output id="line-opacity-value">90</output></div>
+        <div class="map-select line-color-select"><label for="line-color">线条颜色</label><select id="line-color"><option value="#f2703c">橙</option><option value="#c4ef73">荧光绿</option><option value="#ecf6ff">浅白</option><option value="#ff8b5e">橙红</option></select></div>
+      </div>
+      <div class="map-select"><label for="basemap">底图（国内直连）</label><select id="basemap" aria-label="底图来源"></select></div>
+      <div class="map-select"><label for="coords">轨迹坐标</label><select id="coords"><option value="auto">自动匹配底图</option><option value="wgs84">WGS84 原始坐标</option><option value="gcj02">源文件为 GCJ-02</option></select></div>
+      <div class="offline-row"><button id="offline-build" class="offline-button" title="把常去区域的瓦片存到本机，之后完全离线也很快">下载离线地图</button><span id="offline-status">—</span></div>
+    </section>
+
+    <div class="selected-card" id="selected-card" hidden><button id="clear-selection" class="icon-button" title="关闭所选轨迹" aria-label="关闭所选轨迹">×</button><div class="eyebrow">当前活动</div><h3 id="selected-title"></h3><p id="selected-stats"></p><small id="selected-file"></small><button class="detail-toggle" id="toggle-detail" aria-expanded="false">查看更多数据</button><dl class="detail-grid" id="detail-grid" hidden></dl></div>
+    <div class="map-empty" id="map-empty" hidden><div>还没有可显示的轨迹</div><p>导入带 GPS 的 FIT / TCX / GPX 文件，或调整日期与运动筛选。</p></div>
+    <div class="tile-warning" id="tile-warning" hidden>底图暂时无法连接，轨迹仍可查看。可切换底图或使用离线模式。</div>
+    <div class="map-loading" id="map-loading" hidden><i></i> 正在绘制足迹</div>
+
+    <section class="legend" id="heat-legend" hidden><div class="legend-title"><span>线条叠加次数</span><strong id="heat-max">—</strong></div><div class="legend-gradient"></div><div class="legend-scale"><span>一次</span><span>多次</span></div><p>同一条路走过的次数越多，颜色越暖<br>颜色相对当前视野中的最大叠加</p></section>
+    <section class="legend footprint-legend" id="footprint-legend"><div class="legend-title"><span>我去过的地方</span><strong id="footprint-count">—</strong></div><div class="footprint-sample"></div><p>全部筛选轨迹叠加 · 统一颜色<br>放大查看细节，GPS 断点保持分开</p></section>
+    <div class="map-caption"><span class="status-dot"></span><span id="map-caption">本机计算 · 底图国内直连</span></div>
+    <div class="toast" id="toast" role="status" hidden></div>
+  </main>
+</body>
+</html>
