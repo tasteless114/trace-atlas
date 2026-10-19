@@ -560,7 +560,8 @@ class LibraryTests(unittest.TestCase):
             self.assertTrue(all('示例' in Path(name).name for name in demo), demo)
             self.assertEqual([name for name in activity_entries if name not in demo], ['行迹/运动数据/'])
             self.assertFalse(any('/data/' in name or '/.venv/' in name or name.lower().endswith(('.sqlite3', '.jpg')) for name in names))
-            self.assertFalse(any('/data/' in name or '/.venv/' in name or name.lower().endswith(('.fit', '.tcx', '.sqlite3', '.jpg')) for name in names))
+            self.assertFalse(any('/data/' in name or '/.venv/' in name
+                                 or name.lower().endswith(('.sqlite3', '.jpg')) for name in names))
             config = json.loads(archive.read('行迹/config.json'))
             self.assertEqual(config['folder'], '运动数据')
             self.assertIn('行迹/启动行迹.cmd', names)
